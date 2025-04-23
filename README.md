@@ -3,7 +3,9 @@
 
 ## Overview
 
-This project presents a machine learning-based framework for forecasting long-term energy demand across the United States. Using historical net generation data and a hybrid CNN-LSTM model, the study generates accurate monthly energy forecasts for each U.S. state and visualizes future demand using interactive choropleth maps.
+This project presents a machine learning-based framework for forecasting long-term energy demand across the United States. Using historical net generation data and a hybrid CNN-LSTM model, the study generates accurate monthly energy forecasts for each U.S. state and visualizes future demand using interactive choropleth maps. 
+
+- Full research paper: Future Energy Needs
 
 ## Table of Contents
 
@@ -185,13 +187,17 @@ Ultimately, advancing this work involves not only refining model architectures b
 
 ## How to Run
 
-Clone this repository.
+For the CNN-LSTM model:
+- LSTM_preprocessing.py: data preparation for model training
+- CNN_LSTM_model.py: model training
+- CNN_LSTM_forecast.py: forecasting using trained model over 5 year period
 
-Run data_preprocessing.py to clean and structure raw data.
+For the ARIMA models:
+- modelGenerator.R: preprocessing, model training, and forecasting for 5 year period
 
-Use arima_forecasting.py and cnn_lstm_forecasting.py for model training.
-
-Launch visualization/index.html to interact with the choropleth map.
+For the visualization:
+- maps.html: necessary libaries are stored within the CODE folder
+A video demonstrating the visualizaiton is included in this repository ("Visualization Demo.mp4")
 
 ## Acknowledgements
 
