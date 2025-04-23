@@ -1,4 +1,5 @@
 # Energy Generation Forecasting using CNN-LSTM
+![Visualization Image](https://github.com/user-attachments/assets/a40317d5-174c-4abf-9c36-775fae25d406)
 
 ## Overview
 
@@ -146,7 +147,7 @@ Real-world applications emphasize weather, policy, and economic indicators as ke
 
 - Python (Pandas, NumPy, Scikit-learn, TensorFlow/Keras)
 
-- ARIMA (Statsmodels)
+- R (ARIMA, forecast, dplyr, tidyr)
 
 - D3.js for map visualizations
 
