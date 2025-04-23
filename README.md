@@ -72,93 +72,93 @@ Real-world applications emphasize weather, policy, and economic indicators as ke
 
 ### Data Preprocessing
 
-Data sourced from the U.S. Energy Information Administration (EIA)
+- Data sourced from the U.S. Energy Information Administration (EIA)
 
-Monthly net generation by plant with metadata (state, generator ID, operator, fuel type, etc.)
+- Monthly net generation by plant with metadata (state, generator ID, operator, fuel type, etc.)
 
-Time period: 2001–2023
+- Time period: 2015–2023
 
-Grouped by Plant State and resampled monthly
+- Grouped by Plant State and resampled monthly
 
-Missing values filled with zero
+- Missing values filled with zero
 
-Validated for consistency
+- Validated for consistency
 
-Scaled using MinMaxScaler
+- Scaled using MinMaxScaler
 
 ### Time-Series Modeling
 
-Aggregated state-level monthly generation
+- Aggregated state-level monthly generation
 
-Used ARIMA model for univariate prediction
+- Used ARIMA model for univariate prediction
 
-Visual inspection via plots and autocorrelation functions
+- Visual inspection via plots and autocorrelation functions
 
 ### CNN-LSTM Hybrid Architecture
 
-Net generation normalized (0–1)
+- Net generation normalized (0–1)
 
-Input: past 12 months → Output: next month
+- Input: past 12 months → Output: next month
 
-CNN layers extract short-term patterns
+- CNN layers extract short-term patterns
 
-MaxPooling for dimensionality reduction
+- MaxPooling for dimensionality reduction
 
-LSTM layers capture long-term dependencies
+- LSTM layers capture long-term dependencies
 
-Dropout layers to prevent overfitting
+- Dropout layers to prevent overfitting
 
-Dense output layer with tanh activation
+- Dense output layer with tanh activation
 
-Trained using Adam optimizer and MSE loss
+- Trained using Adam optimizer and MSE loss
 
 ## Visualization
 
-Time series plots comparing predicted vs actual values
+- Time series plots comparing predicted vs actual values
 
-Choropleth maps built using D3.js
+- Choropleth maps built using D3.js
 
-Visualizes predicted energy demand by state
+- Visualizes predicted energy demand by state
 
-Heatmaps show per-state performance and volatility
+- Heatmaps show per-state performance and volatility
 
-Allows stakeholders to compare regional demand trends
+- Allows stakeholders to compare regional demand trends
 
 ## Evaluation
 
 ### ARIMA Model
 
-Training: 2015–2023, Test: 2024
+- Training: 2015–2023, Test: 2024
 
-Metrics: MAPE, MAE, RMSE
+- Metrics: MAPE, MAE, RMSE
 
-High accuracy in most states (MAPE < 1%)
+- High accuracy in most states (MAPE < 1%)
 
 ### CNN-LSTM Model
 
-RMSE: 0.022
+- RMSE: 0.022
 
-R²: 0.974
+- R²: 0.974
 
-Outperforms ARIMA in capturing nonlinear and volatile trends
+- Outperforms ARIMA in capturing nonlinear and volatile trends
 
 ## Technologies Used
 
-Python (Pandas, NumPy, Scikit-learn, TensorFlow/Keras)
+- Python (Pandas, NumPy, Scikit-learn, TensorFlow/Keras)
 
-ARIMA (Statsmodels)
+- ARIMA (Statsmodels)
 
-D3.js for map visualizations
+- D3.js for map visualizations
 
 ## Results
 
-Accurate 5-year forecasts per state
+- Accurate 5-year forecasts per state
 
-CNN-LSTM generalizes well, despite volatility in states like Alaska and Wyoming
+- CNN-LSTM generalizes well, despite volatility in states like Alaska and Wyoming
 
-Interactive choropleth map offers clear regional insights
+- Interactive choropleth map offers clear regional insights
 
-Hybrid model outperforms single-method approaches
+- Hybrid model outperforms single-method approaches
 
 ## Conclusion and Future Work
 
