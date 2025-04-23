@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>US Monthly Net‑Generation %Δ (2015‑2029)</title>
+  <!-- Plotly (offline) -->
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <!-- D3 for fast CSV parsing -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body{font-family: Arial, Helvetica, sans-serif;margin:0;padding:0;text-align:center}
+    h2{margin:16px 0}
+    #map{width:98%;max-width:1100px;height:550px;margin:0 auto;}
+    #sliderWrap{width:92%;margin:12px auto}
+    #mini{width:98%;max-width:1100px;height:300px;margin:4px auto;transition:opacity 0.3s;}
+    .green{color:green}
+    .blue{color:#0074D9}
+    #download{margin:8px;padding:6px 14px;font-size:14px}
+  </style>
+</head>
+<body>
+  <h2 id="title">Loading…</h2>
+  <div id="summary" class="green"></div>
+  <div id="metrics" class="blue"></div>
+  <div style="font-style:italic;margin-bottom:10px;">
+    Drag slider to select month; map shows %Δ vs prior month across history + forecast; hover for details.
+  </div>
+
+  <div id="map"></div>
+
+  <div id="sliderWrap">
+    <input type="range" id="slider" min="0" max="0" step="1" value="0" style="width:100%;" />
+    <div id="sliderLabel" style="margin-top:4px;"></div>
+  </div>
+
+  <button id="download">Download PNG</button>
+
+  <div id="mini"></div>
+
+<script>
+// ---------- config -------------
+const HIST_CSV = '2015_2024_Elec_Net_Gen_Data.csv';
+const FC_CSV   = 'Forecast_5Years_AllStates.csv';
+const STATE_NAMES = {
+  "AL":"Alabama","AK":"Alaska","AZ":"Arizona","AR":"Arkansas","CA":"California","CO":"Colorado",
+  "CT":"Connecticut","DE":"Delaware","FL":"Florida","GA":"Georgia","HI":"Hawaii","ID":"Idaho",
+  "IL":"Illinois","IN":"Indiana","IA":"Iowa","KS":"Kansas","KY":"Kentucky","LA":"Louisiana",
+  "ME":"Maine","MD":"Maryland","MA":"Massachusetts","MI":"Michigan","MN":"Minnesota",
+  "MS":"Mississippi","MO":"Missouri","MT":"Montana","NE":"Nebraska","NV":"Nevada",
+  "NH":"New Hampshire","NJ":"New Jersey","NM":"New Mexico","NY":"New York",
+  "NC":"North Carolina","ND":"North Dakota","OH":"Ohio","OK":"Oklahoma","OR":"Oregon",
+  "PA":"Pennsylvania","RI":"Rhode Island","SC":"South Carolina","SD":"South Dakota",
+  "TN":"Tennessee","TX":"Texas","UT":"Utah","VT":"Vermont","VA":"Virginia","WA":"Washington",
+  "WV":"West Virginia","WI":"Wisconsin","WY":"Wyoming"
+};
+const VIRIDIS = 'Viridis';
+
+// ---------- helpers -------------
+function fmtDate(d){
+  return d.toLocaleString('en-US',{month:'short',year:'numeric'});
+}
+function computeMAE_RMSE(testArr, forecastArr){
+  let absErr=0, sqErr=0;
+  testArr.forEach((val,i)=> {
+    let diff = val - forecastArr[i];
+    absErr += Math.abs(diff);
+    sqErr  += diff*diff;
+  });
+  return [absErr/testArr.length, Math.sqrt(sqErr/testArr.length)];
+}
+
+// ---------- main -------------
+Promise.all([d3.csv(HIST_CSV), d3.csv(FC_CSV)]).then(init);
+
+function init([histRaw, fcRaw]){
+  let miniFrozen = false;
+  let currentState = null;
+
+  // identify month columns
+  const monthCols = Object.keys(histRaw[0])
+    .filter(c=>c.startsWith('Net Generation') && !c.includes('Year To Date'));
+
+  // build long-form historical data
+  let longHist = [];
+  histRaw.forEach(row=>{
+    const state = row['Plant State'], year = +row['YEAR'];
+    monthCols.forEach(mc=>{
+      const monthName = mc.split('\n')[1];
+      const dateStr = monthName + ' ' + year;
+      longHist.push({
+        state,
+        date: new Date(dateStr),
+        gen: +row[mc].replace(/,/g,'')||0
+      });
+    });
+  });
+
+  // aggregate by state|date
+  const histMap = new Map();
+  longHist.forEach(r=>{
+    const key = r.state+'|'+r.date.toISOString();
+    histMap.set(key, (histMap.get(key)||0) + r.gen);
+  });
+
+  // unique sorted dates
+  const histDates = Array.from(new Set(longHist.map(r=>r.date.getTime())))
+    .sort().map(t=>new Date(t));
+
+  const states = Array.from(new Set(longHist.map(r=>r.state))).sort();
+
+  // pivot genByState
+  let genByState = {};
+  states.forEach(s=>{
+    genByState[s] = histDates.map(d=>{
+      const key = s+'|'+d.toISOString();
+      return histMap.get(key)||0;
+    });
+  });
+
+  // validation metrics (last 12 vs year-ago)
+  const lastHistDate = histDates.at(-1);
+  const trainEndIdx = histDates.length - 13;
+  let maeSum=0, rmseSum=0, cnt=0;
+  states.forEach(s=>{
+    const actual   = genByState[s].slice(trainEndIdx+1);
+    const forecast = genByState[s].slice(trainEndIdx-11, trainEndIdx+1);
+    if(actual.length===12 && forecast.length===12){
+      const [mae,rmse] = computeMAE_RMSE(actual, forecast);
+      maeSum += mae; rmseSum += rmse; cnt++;
+    }
+  });
+  const globalMAE  = maeSum/cnt;
+  const globalRMSE = rmseSum/cnt;
+
+  // parse forecast CSV
+  fcRaw.forEach(r=>r.DateObj = new Date(r.Date));
+  const futureRows = fcRaw.filter(r=>r.DateObj > lastHistDate);
+  const fcDates = Array.from(
+    new Set(futureRows.map(r=>r.DateObj.getTime()))
+  ).sort().map(t=>new Date(t));
+
+  // extend genByState with forecasts
+  states.forEach(s=>{
+    fcDates.forEach(d=>{
+      const r = futureRows.find(r=>r.DateObj.getTime()===d.getTime());
+      genByState[s].push(r ? (+r[s]||0) : 0);
+    });
+  });
+
+  const allDates = histDates.concat(fcDates);
+
+  // percent-change series
+  let pctByState = {};
+  states.forEach(s=>{
+    const arr = genByState[s];
+    pctByState[s] = arr.map((v,i)=>{
+      return i===0||arr[i-1]===0 ? 0 : (v-arr[i-1])/arr[i-1]*100;
+    });
+  });
+
+  // populate UI
+  document.getElementById('title').textContent =
+    `US Monthly Net‑Generation %Δ (2015–${allDates.at(-1).getFullYear()})`;
+  document.getElementById('summary').textContent =
+    `✅ Hist rows: ${histRaw.length.toLocaleString()}    Fc rows: ${futureRows.length}`;
+  document.getElementById('metrics').textContent =
+    `Validation MAE: ${globalMAE.toFixed(2)} GWh; RMSE: ${globalRMSE.toFixed(2)} GWh`;
+
+  // slider setup
+  const slider   = document.getElementById('slider'),
+        labelDiv = document.getElementById('sliderLabel');
+  slider.max   = allDates.length-1;
+  slider.value = 1;
+  labelDiv.textContent = fmtDate(allDates[1]);
+
+  // initial draw
+  drawMap(1);
+
+  // interactions
+  // -- click to toggle freeze
+  document.getElementById('map').on('plotly_click', ()=>{
+    miniFrozen = !miniFrozen;
+    document.getElementById('mini').style.opacity = miniFrozen ? 0.4 : 1;
+  });
+
+  // -- hover to draw mini when unfrozen
+  document.getElementById('map').on('plotly_hover', d=>{
+    if(miniFrozen) return;
+    currentState = d.points[0].location;
+    drawMini(currentState, +slider.value);
+  });
+
+  // -- unhover to clear mini when unfrozen
+  document.getElementById('map').on('plotly_unhover', ()=>{
+    if(miniFrozen) return;
+    Plotly.purge('mini');
+    currentState = null;
+  });
+
+  // -- slider input
+  slider.addEventListener('input', e=>{
+    const idx = +e.target.value;
+    drawMap(idx);
+    labelDiv.textContent = fmtDate(allDates[idx]);
+    if(!miniFrozen && currentState){
+      Plotly.restyle('mini',
+        { x:[[allDates[idx]]], y:[[pctByState[currentState][idx]]] },
+        [1]
+      );
+    }
+  });
+
+  // download PNG
+  document.getElementById('download').onclick = ()=>{
+    Plotly.downloadImage(
+      document.getElementById('map'),
+      {format:'png', filename:'NetGenPctChange_Map'}
+    );
+  };
+
+  // drawing functions
+  function drawMap(idx){
+    const vals = states.map(s=>pctByState[s][idx]),
+          mn   = Math.min(...vals),
+          mx   = Math.max(...vals),
+          hoverText = states.map((s,i)=>`${STATE_NAMES[s]}<br>${vals[i]>=0?'+':''}${vals[i].toFixed(1)}%`);
+    Plotly.react('map',[{
+      type:'choropleth',
+      locations: states,
+      z: vals,
+      zmin: mn===mx?mn:mn,
+      zmax: mn===mx?mn+1:mx,
+      colorscale: VIRIDIS,
+      locationmode:'USA-states',
+      marker:{line:{color:'white'}},
+      hovertext: hoverText,
+      hoverinfo:'text',
+      colorbar:{title:'% Δ',len:0.6,y:0.5}
+    }],{
+      title: fmtDate(allDates[idx])+' % Δ',
+      geo:{scope:'usa'},
+      margin:{l:0,r:0,t:40,b:0}
+    },{displayModeBar:false});
+  }
+
+  function drawMini(state, idx){
+    const x = allDates, y = pctByState[state];
+    Plotly.newPlot('mini',[
+      {x,y, type:'scatter', mode:'lines', line:{color:'#1f77b4'}, name:state},
+      {x:[x[idx]], y:[y[idx]], type:'scatter', mode:'markers', marker:{color:'red',size:8}, showlegend:false}
+    ],{
+      title: STATE_NAMES[state]+' % Δ vs prior month',
+      xaxis:{title:'Date'}, yaxis:{title:'% Change'},
+      margin:{l:40,r:10,t:40,b:40}
+    },{displayModeBar:false});
+  }
+}
+</script>
+</body>
+</html>
