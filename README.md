@@ -1,57 +1,167 @@
-# ML-Energy-Forecasting
-Research project predicting energy demand using hybrid LSTM-CNN models
-
 # Energy Generation Forecasting using CNN-LSTM
-## Overview
-This project focuses on building a hybrid deep learning model to forecast monthly energy generation by U.S. state. The model combines Convolutional Neural Networks (CNNs) for local pattern detection and Long Short-Term Memory (LSTM) layers for capturing long-term dependencies in the time series data.
 
-##Problem Statement
+## Overview
+
+This project presents a machine learning-based framework for forecasting long-term energy demand across the United States. Using historical net generation data and a hybrid CNN-LSTM model, the study generates accurate monthly energy forecasts for each U.S. state and visualizes future demand using interactive choropleth maps.
+
+## Table of Contents
+
+- Introduction
+
+- Problem Statement
+
+- Literature Review
+
+- Proposed Method
+
+- Data Preprocessing
+
+- Time-Series Modeling
+
+- CNN-LSTM Hybrid Architecture
+
+- Visualization
+
+- Evaluation
+
+- Technologies Used
+
+- Results
+
+- Conclusion and Future Work
+
+- How to Run
+
+- Acknowledgements
+
+## Introduction
+
+With growing global energy demand, accurate energy load forecasting is essential for grid reliability, cost-effectiveness, and sustainable planning. This project aims to provide an adaptive and robust load forecasting solution that accounts for socio-economic, policy, and technological changes.
+
+## Problem Statement
+
 Forecasting energy generation accurately is vital for managing power grid operations, energy trading, and long-term infrastructure planning. Traditional models like ARIMA treat energy generation as a stationary process, which may fail to capture complex temporal patterns. Our goal is to explore advanced deep learning approaches capable of making granular, state-level forecasts that account for regional variability.
 
-## Dataset
-The dataset is sourced from the U.S. Energy Information Administration (EIA) and includes:
+## Literature Review
 
-Monthly net generation by plant
+### Market Factors
 
-Metadata for plant state, generator ID, operator, fuel type, etc.
+Key drivers include distributed generation, smart grid integration, regulatory shifts, and renewable energy adoption. Forecasting models must be region-specific and adapt to socio-economic and infrastructural differences.
+
+### Machine Learning and Deep Learning Approaches
+
+LSTM and CNN models provide high accuracy in temporal and nonlinear pattern detection. Hybrid methods combining ML with traditional models reduce forecasting errors.
+
+### Statistical and Time Series Models
+
+ARIMA and exponential smoothing models are still foundational, especially for short-term predictions.
+
+### Feature Engineering
+
+Feature extraction using PCA, wavelet transforms, and handling seasonality/missing values enhances model performance.
+
+### Hybrid and Ensemble Methods
+
+Combining statistical and ML methods boosts robustness and forecasting accuracy.
+
+### Applications
+
+Real-world applications emphasize weather, policy, and economic indicators as key forecasting inputs.
+
+## Proposed Method
+
+### Data Preprocessing
+
+Data sourced from the U.S. Energy Information Administration (EIA)
+
+Monthly net generation by plant with metadata (state, generator ID, operator, fuel type, etc.)
 
 Time period: 2001–2023
 
-## Preprocessing
-Data grouped by Plant State and resampled monthly
+Grouped by Plant State and resampled monthly
 
-Missing months filled with zero generation
+Missing values filled with zero
 
-Output shaped into 3D sequences: (num_samples, time_steps, features)
+Validated for consistency
 
-Scaled using MinMaxScaler for model training
+Scaled using MinMaxScaler
 
-## Model Architecture
-CNN Layer: 1D convolution filters applied to extract short-term trends
+### Time-Series Modeling
 
-MaxPooling: Downsamples the feature maps
+Aggregated state-level monthly generation
 
-LSTM Layer: Captures sequential dependencies
+Used ARIMA model for univariate prediction
 
-Dense Output Layer: Outputs predicted energy generation for the next month
+Visual inspection via plots and autocorrelation functions
 
-Implemented using TensorFlow/Keras.
+### CNN-LSTM Hybrid Architecture
 
-## Results
-Achieved R² = 0.974 on national-level forecasts
+Net generation normalized (0–1)
 
-Model generalizes well across multiple states, but performance varies due to volatility in data (e.g., Alaska and Wyoming)
+Input: past 12 months → Output: next month
 
-Compared to ARIMA baseline, CNN-LSTM consistently outperformed in capturing nonlinear trends
+CNN layers extract short-term patterns
 
-## Visualizations
+MaxPooling for dimensionality reduction
+
+LSTM layers capture long-term dependencies
+
+Dropout layers to prevent overfitting
+
+Dense output layer with tanh activation
+
+Trained using Adam optimizer and MSE loss
+
+## Visualization
+
 Time series plots comparing predicted vs actual values
 
-Error metrics: MAE, RMSE, MAPE
+Choropleth maps built using D3.js
 
-Heatmaps showing per-state performance and volatility
+Visualizes predicted energy demand by state
 
-## Conclusion
+Heatmaps show per-state performance and volatility
+
+Allows stakeholders to compare regional demand trends
+
+## Evaluation
+
+### ARIMA Model
+
+Training: 2015–2023, Test: 2024
+
+Metrics: MAPE, MAE, RMSE
+
+High accuracy in most states (MAPE < 1%)
+
+### CNN-LSTM Model
+
+RMSE: 0.022
+
+R²: 0.974
+
+Outperforms ARIMA in capturing nonlinear and volatile trends
+
+## Technologies Used
+
+Python (Pandas, NumPy, Scikit-learn, TensorFlow/Keras)
+
+ARIMA (Statsmodels)
+
+D3.js for map visualizations
+
+## Results
+
+Accurate 5-year forecasts per state
+
+CNN-LSTM generalizes well, despite volatility in states like Alaska and Wyoming
+
+Interactive choropleth map offers clear regional insights
+
+Hybrid model outperforms single-method approaches
+
+## Conclusion and Future Work
+
 Accurately forecasting energy generation is a cornerstone of reliable power grid operation and long-term infrastructure planning. Traditional statistical models like ARIMA offer a baseline for prediction by treating energy demand as a stationary or slowly evolving time series. In many cases, this approach can yield reasonable forecasts, particularly when seasonal patterns and trends are stable.
 
 However, as the energy landscape becomes increasingly dynamic—driven by renewable integration, policy shifts, and climate variability—stationarity-based models face significant limitations. This research highlights the value of adopting more expressive and adaptable models such as CNN-LSTM architectures. While ARIMA assumes linearity and requires manual differencing and parameter tuning, deep learning models can automatically learn nonlinear temporal dependencies and extract complex features directly from raw data.
@@ -61,13 +171,27 @@ In this study, the CNN layers efficiently captured short-term local patterns in 
 The impact of this modeling approach extends beyond immediate forecast accuracy. By demonstrating the effectiveness of hybrid deep learning models, this work encourages utility providers, policymakers, and researchers to explore advanced forecasting tools that are better equipped to handle the volatility and high dimensionality of modern energy systems.
 
 ## Future Work
-- Model Enhancements: Explore deeper or wider CNN layers, add attention mechanisms, or integrate Transformer components into the LSTM pipeline
 
-- Ensemble Approaches: Combine CNN-LSTM with GRUs or traditional models to improve robustness
+- Model Enhancements: Explore deeper or wider CNN layers, add attention mechanisms, or integrate Transformer components
 
-- Granular Forecasts: Expand to state-level and plant-level forecasts for better localized decision-making
+- Ensemble Approaches: Combine CNN-LSTM with GRUs or traditional models
 
-- Data Scope: Integrate policy indicators, weather data, and economic factors to further refine predictions
+- Granular Forecasts: Expand to state-level and plant-level for better localized decision-making
+
+- Data Scope: Integrate policy indicators, weather data, and economic factors
 
 Ultimately, advancing this work involves not only refining model architectures but also expanding the scope of data inputs and temporal horizons, ensuring that forecasts remain both accurate and actionable in an evolving energy landscape.
 
+## How to Run
+
+Clone this repository.
+
+Run data_preprocessing.py to clean and structure raw data.
+
+Use arima_forecasting.py and cnn_lstm_forecasting.py for model training.
+
+Launch visualization/index.html to interact with the choropleth map.
+
+## Acknowledgements
+
+This research was conducted as part of energy forecasting efforts at Georgia Tech, supported by historical datasets from the U.S. Energy Information Administration (EIA).
