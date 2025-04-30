@@ -197,7 +197,8 @@ For the ARIMA models:
 
 For the visualization:
 - maps.html: necessary libaries are stored within the CODE folder
-A video demonstrating the visualizaiton is included in this repository ("Visualization Demo.mp4")
+
+A video demonstrating the visualizaiton can be accessed [here](https://youtu.be/K5vfsWBu56w).
 
 ## Acknowledgements
 
